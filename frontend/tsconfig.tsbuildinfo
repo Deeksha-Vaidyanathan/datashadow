@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/api/client.ts","./src/components/actionplan.tsx","./src/components/exposurechart.tsx","./src/components/exposuregauge.tsx","./src/components/scanlist.tsx","./src/pages/dashboard.tsx","./src/pages/scandetail.tsx"],"version":"5.9.3"}
