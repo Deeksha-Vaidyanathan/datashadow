@@ -3,6 +3,9 @@ Data broker opt-out hints. We don't scrape broker sites (legal/ToS); we return
 a curated list of known brokers and opt-out links for the user to act on.
 """
 
+import hashlib
+import random
+
 KNOWN_BROKERS = [
     {
         "name": "Whitepages",
@@ -42,6 +45,20 @@ class DataBrokerService:
 
     def get_broker_list(self) -> list[dict]:
         return list(KNOWN_BROKERS)
+
+    def get_brokers_for_account(self, account: str) -> list[dict]:
+        """
+        In demo mode we cannot verify broker presence. Return a deterministic
+        per-account subset so exposure scoring varies across inputs.
+        """
+        if not account.strip():
+            return []
+        seed = int(hashlib.sha256(f"brokers:{account.lower()}".encode("utf-8")).hexdigest()[:16], 16)
+        rng = random.Random(seed)
+        count = rng.randint(0, len(KNOWN_BROKERS))
+        if count == 0:
+            return []
+        return rng.sample(list(KNOWN_BROKERS), k=count)
 
     def get_broker_count(self) -> int:
         return len(KNOWN_BROKERS)

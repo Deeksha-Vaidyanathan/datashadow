@@ -1,9 +1,38 @@
 import { useEffect, useState } from "react";
 import "./ScanDetail.css";
 import { useParams, useNavigate } from "react-router-dom";
-import { getScan, listRemediation, updateRemediation, type ScanResult, type RemediationItem } from "../api/client";
+import { getScan, listRemediation, updateRemediation, type ScanResult, type RemediationItem, type Breach, type Paste } from "../api/client";
 import ActionPlan from "../components/ActionPlan";
 import ExposureGauge from "../components/ExposureGauge";
+
+/** Strip HTML tags for safe plain-text display of HIBP descriptions */
+function stripHtml(html: string): string {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent ?? div.innerText ?? html;
+}
+
+/** Short "what was compromised" and "what to do" from data classes */
+function breachRisks(dataClasses: string[] = []): { compromised: string; action: string } {
+  const lower = dataClasses.map((c) => c.toLowerCase());
+  const hasPasswords = lower.some((c) => c.includes("password"));
+  const hasEmails = lower.some((c) => c.includes("email") || c.includes("e-mail"));
+  const hasPersonal = lower.some((c) => c.includes("name") || c.includes("address") || c.includes("phone") || c.includes("birth"));
+  let action = "Review the breach details and secure any related accounts.";
+  if (hasPasswords) action = "Change the password for this service and any site where you reused it. Use a unique, strong password.";
+  else if (hasEmails || hasPersonal) action = "Consider changing the account password and enabling 2FA. Watch for phishing targeting this email.";
+  return {
+    compromised: dataClasses.length ? dataClasses.join(", ") : "Various account data",
+    action,
+  };
+}
+
+/** Paste service URL when known (e.g. Pastebin) */
+function pasteUrl(source: string, id: string): string | null {
+  if (source === "Pastebin") return `https://pastebin.com/${id}`;
+  if (source === "Ghostbin") return `https://ghostbin.com/paste/${id}`;
+  return null;
+}
 
 export default function ScanDetail() {
   const { scanId } = useParams<{ scanId: string }>();
@@ -49,7 +78,8 @@ export default function ScanDetail() {
   if (error || !scan) return <div className="page-error">{error || "Not found"}</div>;
 
   const brokers = scan.raw_results?.data_brokers ?? [];
-  const breaches = scan.raw_results?.breaches ?? [];
+  const breaches: Breach[] = scan.raw_results?.breaches ?? [];
+  const pastes: Paste[] = scan.raw_results?.pastes ?? [];
 
   return (
     <div className="scan-detail">
@@ -91,20 +121,89 @@ export default function ScanDetail() {
         onToggle={toggleRemediation}
       />
 
-      <section className="raw-section">
-        <h2>Breaches</h2>
+      <section className="raw-section exposure-section">
+        <h2>Data breaches</h2>
+        <p className="section-intro">
+          Your account was found in the following data breaches. Each entry is a service or site that was hacked and had its user data leaked; your email or username was in that leaked set.
+        </p>
         {breaches.length === 0 ? (
           <p className="muted">None found for this account.</p>
         ) : (
-          <ul className="breach-list">
-            {(breaches as { Name?: string; BreachDate?: string; DataClasses?: string[] }[]).map((b, i) => (
-              <li key={i}>
-                <strong>{b.Name ?? "Unknown"}</strong>
-                {b.BreachDate && ` — ${b.BreachDate}`}
-                {b.DataClasses?.length ? ` (${b.DataClasses.join(", ")})` : ""}
-              </li>
-            ))}
-          </ul>
+          <div className="breach-cards">
+            {breaches.map((b, i) => {
+              const { compromised, action } = breachRisks(b.DataClasses);
+              const title = b.Title ?? b.Name ?? "Unknown breach";
+              const description = b.Description ? stripHtml(b.Description) : null;
+              return (
+                <div key={`${b.Name}-${i}`} className="breach-card">
+                  <div className="breach-card-header">
+                    <span className="breach-title">{title}</span>
+                    {b.BreachDate && <span className="breach-date">Breach date: {b.BreachDate}</span>}
+                  </div>
+                  {b.PwnCount != null && (
+                    <p className="breach-meta">
+                      ~{b.PwnCount.toLocaleString()} accounts affected in this breach
+                    </p>
+                  )}
+                  <p className="breach-what">
+                    <strong>What was exposed:</strong> {compromised}
+                  </p>
+                  {description && (
+                    <p className="breach-description">{description}</p>
+                  )}
+                  <p className="breach-action">
+                    <strong>What you should do:</strong> {action}
+                  </p>
+                  {b.DataClasses && b.DataClasses.length > 0 && (
+                    <div className="data-classes">
+                      {b.DataClasses.map((dc) => (
+                        <span key={dc} className="data-class-tag">{dc}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="raw-section exposure-section">
+        <h2>Pastes</h2>
+        <p className="section-intro">
+          Your email appeared in one or more &quot;pastes&quot; — text dumps posted on sites like Pastebin. These often contain leaked credentials, account lists, or scraped data. Finding your email here means it may be in the hands of attackers or used for phishing.
+        </p>
+        {pastes.length === 0 ? (
+          <p className="muted">None found for this account.</p>
+        ) : (
+          <div className="paste-cards">
+            {pastes.map((p, i) => {
+              const url = pasteUrl(p.Source, p.Id);
+              const dateStr = p.Date ? new Date(p.Date).toLocaleDateString(undefined, { dateStyle: "medium" }) : null;
+              return (
+                <div key={`${p.Source}-${p.Id}-${i}`} className="paste-card">
+                  <div className="paste-card-header">
+                    <span className="paste-source">{p.Source}</span>
+                    {dateStr && <span className="paste-date">{dateStr}</span>}
+                  </div>
+                  {p.Title && <p className="paste-title">{p.Title}</p>}
+                  {p.EmailCount != null && (
+                    <p className="paste-meta">
+                      {p.EmailCount.toLocaleString()} email(s) found in this paste
+                    </p>
+                  )}
+                  <p className="paste-what">
+                    Your address was included in this paste. Such dumps are often from credential leaks or scrapers. Enable two-factor authentication on important accounts and be cautious of phishing targeting this email.
+                  </p>
+                  {url && (
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="paste-link">
+                      View paste on {p.Source} (external)
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </section>
 

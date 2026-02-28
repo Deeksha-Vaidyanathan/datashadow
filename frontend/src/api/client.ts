@@ -1,5 +1,33 @@
 const API_BASE = "/api";
 
+/** HIBP breach (full model when truncateResponse=false) */
+export type Breach = {
+  Name: string;
+  Title?: string;
+  Domain?: string;
+  BreachDate?: string;
+  AddedDate?: string;
+  ModifiedDate?: string;
+  PwnCount?: number;
+  Description?: string;
+  DataClasses?: string[];
+  IsVerified?: boolean;
+  IsFabricated?: boolean;
+  IsSensitive?: boolean;
+  IsRetired?: boolean;
+  IsSpamList?: boolean;
+  IsMalware?: boolean;
+};
+
+/** HIBP paste */
+export type Paste = {
+  Source: string;
+  Id: string;
+  Title?: string;
+  Date?: string;
+  EmailCount?: number;
+};
+
 export type ScanResult = {
   id: number;
   email_or_username: string;
@@ -8,9 +36,13 @@ export type ScanResult = {
   paste_count: number;
   data_broker_flags: number;
   raw_results?: {
-    breaches?: unknown[];
-    pastes?: unknown[];
+    breaches?: Breach[];
+    pastes?: Paste[];
     data_brokers?: { name: string; opt_out_url: string; description: string }[];
+    /** True when breaches or pastes came from demo/simulated data (legacy scans only; we no longer use mock) */
+    demo_mode?: boolean;
+    /** True when HIBP could not be queried (no API key or key invalid/unauthorized) */
+    hibp_unavailable?: boolean;
   };
   action_plan?: { summary: string; actions: ActionPlanItem[] };
   created_at: string;

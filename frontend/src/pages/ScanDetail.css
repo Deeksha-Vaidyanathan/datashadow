@@ -33,6 +33,43 @@
   margin: 0 0 0.25rem 0;
 }
 
+.demo-notice {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.demo-notice strong {
+  color: var(--text);
+}
+
+.hibp-unavailable-notice {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.hibp-unavailable-notice strong {
+  color: var(--text);
+}
+
+.hibp-unavailable-notice code {
+  font-size: 0.9em;
+  background: var(--bg-card);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
 .score-block {
   display: flex;
   align-items: center;
@@ -182,6 +219,109 @@
 
 .raw-section {
   margin-bottom: 1.5rem;
+}
+
+.exposure-section .section-intro {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0.25rem 0 1rem 0;
+  max-width: 60ch;
+}
+
+.breach-cards,
+.paste-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.breach-card,
+.paste-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
+
+.breach-card-header,
+.paste-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.breach-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.breach-date,
+.paste-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.breach-meta,
+.paste-meta {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem 0;
+}
+
+.breach-what,
+.breach-description,
+.breach-action,
+.paste-what {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0.5rem 0;
+}
+
+.breach-description {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.breach-action {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.data-classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+}
+
+.data-class-tag {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--bg-deep);
+  border-radius: 6px;
+  color: var(--text-muted);
+}
+
+.paste-title {
+  font-weight: 500;
+  margin: 0 0 0.35rem 0;
+  font-size: 0.95rem;
+}
+
+.paste-link {
+  display: inline-block;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: var(--accent);
+}
+
+.paste-link:hover {
+  text-decoration: underline;
 }
 
 .breach-list,

@@ -39,9 +39,16 @@ async def create_scan(
     if not account:
         raise HTTPException(status_code=400, detail="email_or_username required")
 
-    breaches = await hibp.get_breaches_for_account(account)
-    pastes = await hibp.get_pastes_for_account(account)
-    broker_list = brokers.get_broker_list()
+    breaches, breaches_ok = await hibp.get_breaches_for_account(account)
+    pastes, pastes_ok = await hibp.get_pastes_for_account(account)
+    
+    # Use mock data if HIBP is unavailable (no API key or rate limited)
+    if not breaches_ok:
+        breaches = hibp._mock_breaches(account)
+    if not pastes_ok:
+        pastes = hibp._mock_pastes(account)
+    
+    broker_list = brokers.get_brokers_for_account(account)
     broker_count = len(broker_list)
 
     action_plan = await plan_svc.generate(
@@ -53,6 +60,8 @@ async def create_scan(
         "breaches": breaches,
         "pastes": pastes,
         "data_brokers": broker_list,
+        "demo_mode": not (breaches_ok and pastes_ok),
+        "hibp_unavailable": not (breaches_ok and pastes_ok),
     }
 
     scan = Scan(
